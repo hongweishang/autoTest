@@ -33,10 +33,10 @@ class GenerateTestCode(object):
                 self.def_indent += 1
                 indent = self.class_indent + self.def_indent
                 self.fh.write('def test' + testFunc.__name__ + '__' + str(item[0]) + '(self):\n' + indent * self.indent)
-                self.fh.write('instance = %s.%s(%s)' % (self.testClass.__name__, str(item[0]), '')  ##need get __init__ info   todo
+                self.fh.write('instance = %s.%s(%s)\n%s' % (self.testClass.__module__, self.testClass.__name__, '', indent * self.indent))  ##need get __init__ info   todo
                 self.fh.write('self.assertEqual(%s.%s(%s), %s, \'%s test fail\')\n%s' %
                     (
-                        self.testClass.__name__,
+                        'instance',
                         testFunc.__name__,
                         str(item[1]['input']),
                         str(item[1]['output']),
@@ -46,12 +46,12 @@ class GenerateTestCode(object):
                 self.__FinishDef()
 
     def __FinishClass(self):
-        self.fh.seek(-(self.class_indent + self.def_indent), 1)
+        self.fh.seek(-(self.class_indent + self.def_indent) * len(self.indent), 1)
         self.class_indent -= 1
         self.fh.write('\n')
 
     def __FinishDef(self):
-        self.fh.seek(-(self.class_indent + self.def_indent), 1)
+        self.fh.seek(-(self.class_indent + self.def_indent) * len(self.indent), 1)
         self.def_indent -= 1
         self.fh.write('\n')
         self.fh.write((self.class_indent + self.def_indent) * self.indent)
@@ -69,7 +69,7 @@ class TestInfoExtractor(object):
         self.listFunc = [getattr(module, x) for x in tmp if type(getattr(module, x)) is types.FunctionType]
 
 class AutoTestGer(object):
-    def __init__(self, testFrameName):
+    def __init__(self, testFrameName='unittest'):
         self.testFrameName = testFrameName
         self.cExtractor = TestInfoExtractor()
         self.cGer = GenerateTestCode()
@@ -97,7 +97,7 @@ class AutoTestGer(object):
 
 
 if __name__ == '__main__':
-    a = AutoTestGer('unittest')
+    a = AutoTestGer()
     a.SetTestFile('demo.py')
     a.SetOutFile('test.py')
     a.Relax()
